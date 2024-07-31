@@ -1,0 +1,149 @@
+-- Dados completos de pessoas físicas
+SELECT 
+    p.id_pessoa, 
+    p.nome, 
+    p.tipo, 
+    p.endereco, 
+    p.telefone, 
+    p.email, 
+    pf.cpf 
+FROM 
+    Pessoa p 
+JOIN 
+    PessoaFisica pf 
+ON 
+    p.id_pessoa = pf.id_pessoa;
+
+-- Dados completos de pessoas jurídicas
+SELECT 
+    p.id_pessoa, 
+    p.nome, 
+    p.tipo, 
+    p.endereco, 
+    p.telefone, 
+    p.email, 
+    pj.cnpj 
+FROM 
+    Pessoa p 
+JOIN 
+    PessoaJuridica pj 
+ON 
+    p.id_pessoa = pj.id_pessoa;
+
+-- Movimentações de entrada
+SELECT 
+    m.id_compra,
+    p.nome AS fornecedor,
+    pr.nome AS produto,
+    m.quantidade,
+    m.preco_unitario,
+    m.quantidade * m.preco_unitario AS valor_total,
+    m.data_movimento
+FROM 
+    Movimento m
+JOIN 
+    Pessoa p ON m.id_pessoa = p.id_pessoa
+JOIN 
+    Produto pr ON m.id_produto = pr.id_produto
+WHERE 
+    m.tipo = 'E';
+
+-- Movimentações de saída
+SELECT 
+    m.id_compra,
+    p.nome AS comprador,
+    pr.nome AS produto,
+    m.quantidade,
+    m.preco_unitario,
+    m.quantidade * m.preco_unitario AS valor_total,
+    m.data_movimento
+FROM 
+    Movimento m
+JOIN 
+    Pessoa p ON m.id_pessoa = p.id_pessoa
+JOIN 
+    Produto pr ON m.id_produto = pr.id_produto
+WHERE 
+    m.tipo = 'S';
+
+-- Valor total das entradas agrupadas por produto
+SELECT 
+    pr.nome AS produto,
+    SUM(m.quantidade * m.preco_unitario) AS valor_total_entradas
+FROM 
+    Movimento m
+JOIN 
+    Produto pr ON m.id_produto = pr.id_produto
+WHERE 
+    m.tipo = 'E'
+GROUP BY 
+    pr.nome;
+
+-- Valor total das saídas agrupadas por produto
+SELECT 
+    pr.nome AS produto,
+    SUM(m.quantidade * m.preco_unitario) AS valor_total_saidas
+FROM 
+    Movimento m
+JOIN 
+    Produto pr ON m.id_produto = pr.id_produto
+WHERE 
+    m.tipo = 'S'
+GROUP BY 
+    pr.nome;
+
+-- Operadores que não efetuaram movimentações de entrada
+SELECT 
+    u.id_usuario, 
+    u.nome, 
+    u.email
+FROM 
+    Usuario u
+WHERE 
+    u.id_usuario NOT IN (
+        SELECT DISTINCT 
+            m.id_usuario 
+        FROM 
+            Movimento m 
+        WHERE 
+            m.tipo = 'E'
+    );
+
+-- Valor total de entrada, agrupado por operador
+SELECT 
+    u.nome AS operador,
+    SUM(m.quantidade * m.preco_unitario) AS valor_total_entradas
+FROM 
+    Movimento m
+JOIN 
+    Usuario u ON m.id_usuario = u.id_usuario
+WHERE 
+    m.tipo = 'E'
+GROUP BY 
+    u.nome;
+
+-- Valor total de saída, agrupado por operador
+SELECT 
+    u.nome AS operador,
+    SUM(m.quantidade * m.preco_unitario) AS valor_total_saidas
+FROM 
+    Movimento m
+JOIN 
+    Usuario u ON m.id_usuario = u.id_usuario
+WHERE 
+    m.tipo = 'S'
+GROUP BY 
+    u.nome;
+
+-- Valor médio de venda por produto, utilizando média ponderada
+SELECT 
+    pr.nome AS produto,
+    SUM(m.quantidade * m.preco_unitario) / SUM(m.quantidade) AS media_ponderada_vendas
+FROM 
+    Movimento m
+JOIN 
+    Produto pr ON m.id_produto = pr.id_produto
+WHERE 
+    m.tipo = 'S'
+GROUP BY 
+    pr.nome;
